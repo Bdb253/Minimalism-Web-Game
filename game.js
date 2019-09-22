@@ -5,6 +5,7 @@ gameport.appendChild(renderer.view);
 
 var score = 0;
 var stage = new PIXI.Container();
+let ticker = PIXI.Ticker.shared;
 
 //robot body
 var robotTexture = PIXI.Texture.from("robot_body.png");
@@ -60,6 +61,18 @@ function shoot(startPosition){
   bullets.push(rbullet);
 }
 
+//stars
+stars = [];
+starSpeed = 4;
+var starTexture = new PIXI.Texture.from("star.png");
+
+//asteroids
+asteroids = [];
+asteroidSpeed = 1;
+asteroidSpawnTime = 5000;
+asteroidTimetoSpawn = 2500;
+var asteroidTexture = new PIXI.Texture.from("asteroid.png");
+
 //score counter
 const style = new PIXI.TextStyle({
     fontFamily: 'Arial',
@@ -80,11 +93,6 @@ function score()
 	score +=1;
 	scoreText.text = score;
 }
-
-//stars
-stars = []
-starSpeed = 4;
-var starTexture = new PIXI.Texture.from("star.png");
 
 function keydownEventHandler(e)
 {
@@ -119,28 +127,13 @@ function keydownEventHandler(e)
 }
 document.addEventListener('keydown', keydownEventHandler);
 
-function animate()
-{
-	requestAnimationFrame(animate);
-	
-	//rotate robot to face mouse
-
-	
-	renderer.render(stage);
-
-	//TODO:
-	//better game loop
-	//need to add hit box to bullets
-	//improve movement controls
-	//random lights to fake movement
-	//random targets
-	//increment score for target destroyed
-	//life or time system
-}
-
+ticker.autoStart = false;
+ticker.stop();
 requestAnimationFrame(animate);
-function animate() {
-
+function animate(time) {
+	
+	ticker.update(time);
+	console.log(time);
 	//spawn moving stars in the background to simulate movement
 	var star = new PIXI.Sprite(starTexture);
 	star.scale.x = 0.5;
@@ -150,7 +143,7 @@ function animate() {
 	star.zIndex = 0;
 	stage.addChild(star);
 	stars.push(star);
-	
+
 	for(var s=stars.length-1;s>=0;s--)
 	{
 		stars[s].position.y += 1 * starSpeed;
@@ -162,6 +155,7 @@ function animate() {
 		}
 	}
 
+	//handle bullets
 	for(var b=bullets.length-1;b>=0;b--)
 	{
 		bullets[b].position.y += -1 * bulletSpeed;
@@ -173,6 +167,42 @@ function animate() {
 
 		}
 	}
+
+	//spawn ateroids and comets randomly increasing over time
+	var asteroid = new PIXI.Sprite(asteroidTexture);
+	var scale = Math.random() * (1.5 - .25) + .25; 
+	asteroid.scale.x = scale;
+	asteroid.scale.y = scale;
+	asteroid.position.y = -100;
+	asteroid.position.x = Math.floor(Math.random()* 400);
+
+	if (time >= asteroidSpawnTime)
+	{
+		stage.addChild(asteroid);
+		asteroids.push(asteroid);
+		asteroidSpawnTime += asteroidTimetoSpawn;
+	}
+
+	for(var a=asteroids.length-1;a>=0;a--)
+	{
+		asteroids[a].position.y += 1 * asteroidSpeed;
+		
+		if(asteroids[a].position.y >= 500)
+		{
+			stage.removeChild(asteroids[a]);
+			asteroids.splice(a, 1);
+			//score();
+			score +=1;
+			scoreText.text = score;
+		}
+	}
+
+
+	//TODO:
+	//better game loop
+	//need to add hit box to bullets
+	//improve movement controls
+	//life or time system
 	
 	renderer.render(stage);
 	requestAnimationFrame(animate);
