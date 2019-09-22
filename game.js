@@ -112,6 +112,7 @@ function keydownEventHandler(e)
 	  	});
 	}
 }
+document.addEventListener('keydown', keydownEventHandler);
 
 function animate()
 {
@@ -119,15 +120,11 @@ function animate()
 	
 	//rotate robot to face mouse
 
-	for(var b=bullets.length-1;b>=0;b--){
-
-	  bullets[b].position.y += -1 * bulletSpeed;
-	}
+	
 	renderer.render(stage);
 
 	//TODO:
 	//better game loop
-	//need to remove bullets from scene after they are out of bounds
 	//need to add hit box to bullets
 	//improve movement controls
 	//random lights to fake movement
@@ -136,5 +133,25 @@ function animate()
 	//life or time system
 }
 
-animate();
-document.addEventListener('keydown', keydownEventHandler);
+// setup RAF
+var oldTime = Date.now();
+
+requestAnimationFrame(animate);
+function animate() {
+    	
+	for(var b=bullets.length-1;b>=0;b--)
+	{
+		bullets[b].position.y += -1 * bulletSpeed;
+		
+		if(bullets[b].position.y <= -100)
+		{
+			stage.removeChild(bullets[b]);
+			bullets.splice(b, 1);
+
+		}
+	}
+	
+	renderer.render(stage);
+	requestAnimationFrame(animate);
+}
+
