@@ -13,6 +13,7 @@ robot.anchor.x = 0.5;
 robot.anchor.y = 0.5;
 robot.position.x = 200;
 robot.position.y = 350;
+robot.zIndex = 100;
 
 //robot arms
 var armTexture = PIXI.Texture.from("robot_arm.png");
@@ -21,14 +22,14 @@ larm.anchor.x = 0.5;
 larm.anchor.y = 1;
 larm.position.x = -15;
 larm.position.y = 8;
-larm.zIndex = 1;
+larm.zIndex = 101;
 
 var rarm = new PIXI.Sprite(armTexture);
 rarm.anchor.x = 0.5;
 rarm.anchor.y = 1;
 rarm.position.x = 15;
 rarm.position.y = 8;
-rarm.zIndex = 1;
+rarm.zIndex = 101;
 
 robot.addChild(larm)
 robot.addChild(rarm)
@@ -70,16 +71,20 @@ const style = new PIXI.TextStyle({
 scoreText = new PIXI.Text(score);
 scoreText.x = 300;
 scoreText.y = 10;
+scoreText.zIndex = 100
 scoreText.style = style;
 stage.addChild(scoreText);
-
-
 
 function score()
 {
 	score +=1;
 	scoreText.text = score;
 }
+
+//stars
+stars = []
+starSpeed = 4;
+var starTexture = new PIXI.Texture.from("star.png");
 
 function keydownEventHandler(e)
 {
@@ -133,12 +138,30 @@ function animate()
 	//life or time system
 }
 
-// setup RAF
-var oldTime = Date.now();
-
 requestAnimationFrame(animate);
 function animate() {
-    	
+
+	//spawn moving stars in the background to simulate movement
+	var star = new PIXI.Sprite(starTexture);
+	star.scale.x = 0.5;
+	star.scale.y = 0.5;
+	star.position.y = -100;
+	star.position.x = Math.floor(Math.random()* 400);
+	star.zIndex = 0;
+	stage.addChild(star);
+	stars.push(star);
+	
+	for(var s=stars.length-1;s>=0;s--)
+	{
+		stars[s].position.y += 1 * starSpeed;
+		
+		if(stars[s].position.y >= 500)
+		{
+			stage.removeChild(stars[s]);
+			stars.splice(s, 1);
+		}
+	}
+
 	for(var b=bullets.length-1;b>=0;b--)
 	{
 		bullets[b].position.y += -1 * bulletSpeed;
