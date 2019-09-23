@@ -4,8 +4,19 @@ var renderer = PIXI.autoDetectRenderer({width: 400, height: 400, backgroundColor
 gameport.appendChild(renderer.view);
 
 var score = 0;
-var stage = new PIXI.Container();
+
 let ticker = PIXI.Ticker.shared;
+
+//background group
+//const bgGroup = new PIXI.display.Group(0, true);
+//bgGroup.on('sort', (sprite) => {
+//	sprite.zOrder = sprite.y;
+//})
+
+var stage = new PIXI.Container();
+stage.sortableChildren = true;
+
+//stage.addChild(new PIXI.display.Layer(bgGroup));
 
 //robot body
 var robotTexture = PIXI.Texture.from("robot_body.png");
@@ -14,7 +25,7 @@ robot.anchor.x = 0.5;
 robot.anchor.y = 0.5;
 robot.position.x = 200;
 robot.position.y = 350;
-robot.zIndex = 100;
+robot.zIndex = 5;
 
 //robot arms
 var armTexture = PIXI.Texture.from("robot_arm.png");
@@ -23,14 +34,14 @@ larm.anchor.x = 0.5;
 larm.anchor.y = 1;
 larm.position.x = -15;
 larm.position.y = 8;
-larm.zIndex = 101;
+larm.zIndex = 10;
 
 var rarm = new PIXI.Sprite(armTexture);
 rarm.anchor.x = 0.5;
 rarm.anchor.y = 1;
 rarm.position.x = 15;
 rarm.position.y = 8;
-rarm.zIndex = 101;
+rarm.zIndex = 10;
 
 robot.addChild(larm)
 robot.addChild(rarm)
@@ -72,6 +83,13 @@ asteroidSpeed = 1;
 asteroidSpawnTime = 5000;
 asteroidTimetoSpawn = 2500;
 var asteroidTexture = new PIXI.Texture.from("asteroid.png");
+
+//comets
+comets = [];
+cometSpeed = 3;
+cometSpawnTime = 0;
+cometTimeToSpawn = 6500;
+var cometTexture = new PIXI.Texture.from("comet.png");
 
 //score counter
 const style = new PIXI.TextStyle({
@@ -140,8 +158,8 @@ function animate(time) {
 	star.scale.y = 0.5;
 	star.position.y = -100;
 	star.position.x = Math.floor(Math.random()* 400);
-	star.zIndex = 0;
-	stage.addChild(star);
+	//star.parentGroup = bgGroup;
+	stage.addChildAt(star, stage.children.length-1);
 	stars.push(star);
 
 	for(var s=stars.length-1;s>=0;s--)
@@ -174,7 +192,8 @@ function animate(time) {
 	asteroid.scale.x = scale;
 	asteroid.scale.y = scale;
 	asteroid.position.y = -100;
-	asteroid.position.x = Math.floor(Math.random()* 400);
+	asteroid.position.x = Math.floor(Math.random()* (390 - 10)) + 10;
+	asteroid.zIndex = 10;
 
 	if (time >= asteroidSpawnTime)
 	{
@@ -197,9 +216,43 @@ function animate(time) {
 		}
 	}
 
+	//comets
+	if(score >= 10)
+	{
+		//cometSpawnTime = time;
+		var comet = new PIXI.Sprite(cometTexture);
+		var scale = Math.random() * (2 - 1.25) + 1.25;
+		comet.scale.x = scale;
+		comet.scale.y = scale;
+		comet.position.y = -100;
+		comet.position.x = Math.floor(Math.random()* 400);
+		comet.zIndex = 10;
+
+		if (time >= cometSpawnTime)
+		{
+			stage.addChild(comet);
+			comets.push(comet);
+			cometSpawnTime += cometTimeToSpawn;
+		}
+
+		for(var c=comets.length-1;c>=0;c--)
+		{
+			comets[c].position.y += 1 * cometSpeed;
+		
+			if(comets[c].position.y >= 500)
+			{
+				stage.removeChild(comets[c]);
+				comets.splice(c, 1);
+				//score();
+				score +=5;
+				scoreText.text = score;
+			}
+		}
+	}
+
 
 	//TODO:
-	//better game loop
+	//better game loopqqq
 	//need to add hit box to bullets
 	//improve movement controls
 	//life or time system
