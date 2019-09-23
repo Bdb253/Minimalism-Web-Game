@@ -4,19 +4,10 @@ var renderer = PIXI.autoDetectRenderer({width: 400, height: 400, backgroundColor
 gameport.appendChild(renderer.view);
 
 var score = 0;
-
 let ticker = PIXI.Ticker.shared;
-
-//background group
-//const bgGroup = new PIXI.display.Group(0, true);
-//bgGroup.on('sort', (sprite) => {
-//	sprite.zOrder = sprite.y;
-//})
 
 var stage = new PIXI.Container();
 stage.sortableChildren = true;
-
-//stage.addChild(new PIXI.display.Layer(bgGroup));
 
 //robot body
 var robotTexture = PIXI.Texture.from("robot_body.png");
@@ -51,27 +42,6 @@ robot.scale.x = 1.5;
 robot.scale.y = 1.5;
 stage.addChild(robot);
 
-//projectile
-var projTexture = PIXI.Texture.from("robot_projectile.png")
-
-var bullets = [];  
-var bulletSpeed = 5;
-
-function shoot(startPosition){  
-  var lbullet = new PIXI.Sprite(projTexture);
-  lbullet.position.x = startPosition.x - 50;
-  lbullet.position.y = startPosition.y -10;
-
-  var rbullet = new PIXI.Sprite(projTexture);
-  rbullet.position.x = startPosition.x - 5;
-  rbullet.position.y = startPosition.y - 10;
-
-  stage.addChild(lbullet);
-  stage.addChild(rbullet);
-  bullets.push(lbullet);
-  bullets.push(rbullet);
-}
-
 //stars
 stars = [];
 starSpeed = 4;
@@ -92,7 +62,7 @@ cometTimeToSpawn = 6500;
 var cometTexture = new PIXI.Texture.from("comet.png");
 
 //score counter
-const style = new PIXI.TextStyle({
+const scoreStyle = new PIXI.TextStyle({
     fontFamily: 'Arial',
     fontSize: 36,
     fontWeight: 'bold',
@@ -103,15 +73,43 @@ scoreText = new PIXI.Text(score);
 scoreText.x = 300;
 scoreText.y = 10;
 scoreText.zIndex = 100
-scoreText.style = style;
+scoreText.style = scoreStyle;
 stage.addChild(scoreText);
 
-function score()
-{
-	score +=1;
-	scoreText.text = score;
-}
+//gameOver text
+const gameOverStyle = new PIXI.TextStyle({
+    fontFamily: 'Arial',
+    fontSize: 60,
+    fontWeight: 'bold',
+    fill: '#FF0000',
+});
 
+gameOverText = new PIXI.Text("GAME OVER");
+gameOverText.x = 20;
+gameOverText.y = 175;
+gameOverText.zIndex = 100
+gameOverText.style = gameOverStyle;
+
+//restart text
+const restartStyle = new PIXI.TextStyle({
+    fontFamily: 'Arial',
+    fontSize: 45,
+    fontWeight: 'bold',
+    fill: '#FF0000',
+});
+
+restartText = new PIXI.Text("Restart?");
+restartText.x = 125;
+restartText.y = 250;
+restartText.zIndex = 100
+restartText.style = restartStyle;
+restartText.interactive = true;
+restartText.click = function(e)
+{
+	location.reload();
+};
+
+//robot movement
 function keydownEventHandler(e)
 {
 	//w key
@@ -134,24 +132,18 @@ function keydownEventHandler(e)
 	{
 		robot.position.x += 10;
 	}
-	//space bar
-	if(e.keyCode == 32)
-	{
-		shoot({
-			x: robot.position.x+Math.cos(robot.rotation)*20,
-			y: robot.position.y+Math.sin(robot.rotation)*20
-	  	});
-	}
 }
 document.addEventListener('keydown', keydownEventHandler);
 
 ticker.autoStart = false;
 ticker.stop();
+gameOver = false;
+
 requestAnimationFrame(animate);
 function animate(time) {
-	
+
 	ticker.update(time);
-	console.log(time);
+
 	//spawn moving stars in the background to simulate movement
 	var star = new PIXI.Sprite(starTexture);
 	star.scale.x = 0.5;
@@ -173,19 +165,6 @@ function animate(time) {
 		}
 	}
 
-	//handle bullets
-	for(var b=bullets.length-1;b>=0;b--)
-	{
-		bullets[b].position.y += -1 * bulletSpeed;
-		
-		if(bullets[b].position.y <= -100)
-		{
-			stage.removeChild(bullets[b]);
-			bullets.splice(b, 1);
-
-		}
-	}
-
 	//spawn ateroids and comets randomly increasing over time
 	var asteroid = new PIXI.Sprite(asteroidTexture);
 	var scale = Math.random() * (1.5 - .25) + .25; 
@@ -195,7 +174,7 @@ function animate(time) {
 	asteroid.position.x = Math.floor(Math.random()* (390 - 10)) + 10;
 	asteroid.zIndex = 10;
 
-	if (time >= asteroidSpawnTime)
+	if (time >= asteroidSpawnTime && gameOver == false)
 	{
 		stage.addChild(asteroid);
 		asteroids.push(asteroid);
@@ -206,13 +185,26 @@ function animate(time) {
 	{
 		asteroids[a].position.y += 1 * asteroidSpeed;
 		
-		if(asteroids[a].position.y >= 500)
+		if(asteroids[a].position.y >= 450 && gameOver == false)
 		{
 			stage.removeChild(asteroids[a]);
 			asteroids.splice(a, 1);
-			//score();
 			score +=1;
 			scoreText.text = score;
+		}
+
+		var asteroidBounds = asteroids[a].getBounds();
+		var robotBounds = robot.getBounds();
+
+		if((asteroidBounds.x + asteroidBounds.width/2) + asteroidBounds.width > (robotBounds.x + robotBounds.width/2) &&
+			 (asteroidBounds.x + asteroidBounds.width/2) < (robotBounds.x+ robotBounds.width/2) + robotTexture.width &&
+			  (asteroidBounds.y +asteroidBounds.height/2) + asteroidBounds.height > (robotBounds.y + robotBounds.height/2) &&
+			   (asteroidBounds.y+asteroidBounds.height/2) < (robotBounds.y + robotBounds.height/2) + robotBounds.height)
+		{
+			console.log("HIT!!!!!!");
+			stage.addChild(gameOverText);
+			stage.addChild(restartText);
+			gameOver = true;
 		}
 	}
 
@@ -228,7 +220,7 @@ function animate(time) {
 		comet.position.x = Math.floor(Math.random()* 400);
 		comet.zIndex = 10;
 
-		if (time >= cometSpawnTime)
+		if (time >= cometSpawnTime && gameOver == false)
 		{
 			stage.addChild(comet);
 			comets.push(comet);
@@ -238,8 +230,22 @@ function animate(time) {
 		for(var c=comets.length-1;c>=0;c--)
 		{
 			comets[c].position.y += 1 * cometSpeed;
+
+			var cometBounds = comets[c].getBounds();
+			var robotBounds = robot.getBounds();
+
+			if((cometBounds.x + cometBounds.width/2) + cometBounds.width > (robotBounds.x + robotBounds.width/2) &&
+			 	(cometBounds.x + cometBounds.width/2) < (robotBounds.x+ robotBounds.width/2) + robotTexture.width &&
+			  	(cometBounds.y + cometBounds.height/2) + cometBounds.height > (robotBounds.y + robotBounds.height/2) &&
+			   	(cometBounds.y + cometBounds.height/2) < (robotBounds.y + robotBounds.height/2) + robotBounds.height)
+			{
+				console.log("HIT!!!!!!");
+				stage.addChild(gameOverText);
+				stage.addChild(restartText);
+				gameOver = true;
+			}
 		
-			if(comets[c].position.y >= 500)
+			if(comets[c].position.y >= 450 && gameOver == false)
 			{
 				stage.removeChild(comets[c]);
 				comets.splice(c, 1);
@@ -247,17 +253,8 @@ function animate(time) {
 				score +=5;
 				scoreText.text = score;
 			}
-		}
+		}		
 	}
-
-
-	//TODO:
-	//better game loopqqq
-	//need to add hit box to bullets
-	//improve movement controls
-	//life or time system
-	
 	renderer.render(stage);
 	requestAnimationFrame(animate);
 }
-
