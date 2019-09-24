@@ -44,12 +44,12 @@ stage.addChild(robot);
 
 //stars
 stars = [];
-starSpeed = 4;
+starSpeed = 1;
 var starTexture = new PIXI.Texture.from("star.png");
 
 //asteroids
 asteroids = [];
-asteroidSpeed = 1;
+asteroidSpeed = 2;
 asteroidSpawnTime = 5000;
 asteroidTimetoSpawn = 2500;
 var asteroidTexture = new PIXI.Texture.from("asteroid.png");
@@ -139,6 +139,19 @@ ticker.autoStart = false;
 ticker.stop();
 gameOver = false;
 
+//starting stars
+for(var s = 0; s < 300; s++)
+{
+	var star = new PIXI.Sprite(starTexture);
+	star.scale.x = 0.5;
+	star.scale.y = 0.5;
+	star.position.y = Math.floor(Math.random()* 400);
+	star.position.x = Math.floor(Math.random()* 400);
+	//star.parentGroup = bgGroup;
+	stage.addChildAt(star, stage.children.length-1);
+	stars.push(star);
+}
+
 requestAnimationFrame(animate);
 function animate(time) {
 
@@ -148,7 +161,7 @@ function animate(time) {
 	var star = new PIXI.Sprite(starTexture);
 	star.scale.x = 0.5;
 	star.scale.y = 0.5;
-	star.position.y = -100;
+	star.position.y = -25;
 	star.position.x = Math.floor(Math.random()* 400);
 	//star.parentGroup = bgGroup;
 	stage.addChildAt(star, stage.children.length-1);
